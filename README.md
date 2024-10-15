@@ -173,7 +173,7 @@ Envia mensagens para a API da OpenAI. Este comando irá:
 ## Como Usar
 
 1. **Inicialização e Configuração**:
-   - Após clonar o repositório, execute `codeai init` para configurar o ambiente.
+   - Após clonar o repositório, execute `codea criar` para configurar o ambiente.
    - Isso criará todos os diretórios e arquivos necessários para que você comece a interagir com a API.
 
 2. **Enviar Mensagens**:
