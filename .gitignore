@@ -1,3 +1,5 @@
 .codeai/
 __pycache__/
 codeai.egg-info/
+venv/
+.venv/
