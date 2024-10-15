@@ -1,0 +1,9 @@
+setup.py
+codeai/__init__.py
+codeai/cli.py
+codeai.egg-info/PKG-INFO
+codeai.egg-info/SOURCES.txt
+codeai.egg-info/dependency_links.txt
+codeai.egg-info/entry_points.txt
+codeai.egg-info/requires.txt
+codeai.egg-info/top_level.txt

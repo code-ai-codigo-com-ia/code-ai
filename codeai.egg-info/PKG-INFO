@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: codeai
+Version: 0.1.0
+Summary: CLI para interação com a API da OpenAI
+Author: codeai-brasil
+Author-email: codeai-brasil@proton.me
+Requires-Dist: openai
