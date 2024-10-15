@@ -127,7 +127,7 @@ Após ativar o ambiente virtual, instale o CodeAI seguindo as instruções da se
 Após a instalação, é necessário inicializar o ambiente de configuração. Execute o seguinte comando:
 
 ```bash
-codeai init
+codeai criar 
 ```
 
 Isso criará um diretório `.codeai` com os arquivos de configuração e um diretório `conversa` para armazenar as interações.
@@ -136,7 +136,7 @@ Isso criará um diretório `.codeai` com os arquivos de configuração e um dire
 
 O CodeAI possui os seguintes comandos para interagir com a ferramenta:
 
-### `codeai init`
+### `codeai criar`
 
 Inicializa o CodeAI e cria a estrutura de diretórios necessária.
 
