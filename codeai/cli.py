@@ -3,7 +3,7 @@ import json
 import click
 import yaml
 from codeai.context_manager import initialize_context, create_context_file
-from codeai.conversation_manager import initialize_conversation, send_message_to_openai, save_message
+from codeai.conversation_manager import initialize_conversation, save_response, load_conversation
 
 CONFIG_DIR = '.codeai'
 CONVERSA_DIR = 'conversa'
@@ -65,7 +65,7 @@ def contexto():
 
 @main.command()
 def enviar():
-    """Envia a mensagem para a API da OpenAI"""
+    """Envia a mensagem para a API do modelo escolhido (OpenAI ou Gemini)"""
     root_dir = os.getcwd()
 
     # Inicializa ou carrega a conversa
@@ -80,42 +80,31 @@ def enviar():
     with open(context_file_path, 'r', encoding='utf-8') as context_file:
         context_message = context_file.read()
 
-    # Verifica o último arquivo de mensagem no formato {numero}_mensagem.md
+    # Carrega a configuração
+    config_file_path = os.path.join(root_dir, CONFIG_DIR, 'config.yml')
+    with open(config_file_path, 'r', encoding='utf-8') as f:
+        config_data = yaml.safe_load(f)  # Adiciona essa linha
+
+    # Carregar a conversa
+    conversation = load_conversation(conversa_path)
+
+    # Adiciona system message e contexto ao array de conversa
+    conversation.insert(0, {"role": "system", "content": system_message['content']})
+    if context_message:
+        conversation.insert(1, {"role": "system", "content": f"Contexto adicional: {context_message}"})
+
+    # Verifica se o modelo é Gemini ou OpenAI e usa o conector correto
+    if config_data.get('modelo') == 'gemini-1.5-flash':
+        from codeai.gemini_connector import send_message_to_gemini
+        response = send_message_to_gemini(conversation)
+    else:
+        from codeai.openai_connector import send_message_to_openai
+        response = send_message_to_openai(conversation)
+
+    # Salva a resposta
     message_files = sorted([f for f in os.listdir(conversa_path) if f.endswith('_mensagem.md')])
-    if not message_files:
-        click.echo("Nenhuma mensagem foi encontrada.")
-        return
-
-    # Usa o último arquivo de mensagem
-    last_message_file = message_files[-1]
-    last_message_num = int(last_message_file.split('_')[0])  # Extrai o número da mensagem
-    
-    last_message_path = os.path.join(conversa_path, last_message_file)
-    with open(last_message_path, 'r', encoding='utf-8') as f:
-        user_message = f.read()
-
-    # Verifica se a mensagem não está vazia ou apenas com comentários
-    if not user_message.strip() or user_message.strip().startswith("#"):
-        click.echo("A mensagem está vazia ou contém apenas comentários. Por favor, escreva sua mensagem.")
-        return
-
-    # Envia para a OpenAI
-    response = send_message_to_openai(system_message, context_message, conversa_path)
-
-    # Salva a resposta no arquivo correspondente {numero}_resposta.md
-    response_file = os.path.join(conversa_path, f"{last_message_num}_resposta.md")
-    with open(response_file, 'w', encoding='utf-8') as resp_file:
-        resp_file.write(response)
-    
-    click.echo(f"Resposta salva em {response_file}.")
-
-    # Cria o próximo arquivo de mensagem numerado
-    next_message_num = last_message_num + 1
-    next_message_path = os.path.join(conversa_path, f"{next_message_num}_mensagem.md")
-
-    with open(next_message_path, 'w', encoding='utf-8') as f:
-        f.write("# Escreva sua próxima mensagem aqui e salve o arquivo.\n")
-    click.echo(f"Arquivo {next_message_path} recriado para novas mensagens.")
+    last_user_message_file = os.path.join(conversa_path, message_files[-1])
+    save_response(conversa_path, response, last_user_message_file)
 
 
 if __name__ == '__main__':
