@@ -33,20 +33,21 @@ def load_conversation(conversa_path):
     files = sorted(os.listdir(conversa_path))
 
     for file in files:
-        if file.startswith("mensagem_"):
+        if file.endswith('_mensagem.md'):
             with open(os.path.join(conversa_path, file), 'r', encoding='utf-8') as f:
                 conversation.append({
                     "role": "user",
-                    "content": f.read()
+                    "content": f.read().strip()
                 })
-        elif file.startswith("resposta_"):
+        elif file.endswith('_resposta.md'):
             with open(os.path.join(conversa_path, file), 'r', encoding='utf-8') as f:
                 conversation.append({
                     "role": "assistant",
-                    "content": f.read()
+                    "content": f.read().strip()
                 })
 
     return conversation
+
 
 def save_response(conversa_path, response, last_user_message_file):
     """Salva a resposta do modelo no arquivo de resposta"""
