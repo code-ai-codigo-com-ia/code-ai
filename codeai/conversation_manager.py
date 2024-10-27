@@ -1,8 +1,61 @@
 import os
 import json
+import yaml
 
 CONVERSA_DIR = 'conversa'
 SYSTEM_FILE = 'system_message.md'
+CONFIG_FILE = 'config.yml'
+
+def load_config(root_dir):
+    """Carrega as configurações do arquivo config.yml"""
+    config_path = os.path.join(root_dir, '.codeai', CONFIG_FILE)
+    with open(config_path, 'r', encoding='utf-8') as f:
+        return yaml.safe_load(f)
+
+def load_conversation(conversa_path, controle_de_historico):
+    """Carrega o histórico da conversa com base no controle de histórico"""
+    conversation = []
+    files = sorted(os.listdir(conversa_path), key=lambda f: int(f.split('_')[0]))
+
+    # Pega o número da última interação para limitar o histórico carregado
+    current_interaction_num = int(files[-1].split('_')[0])
+
+    # Verifica o limite de histórico a ser carregado
+    if controle_de_historico >= current_interaction_num:
+        # Carrega todo o histórico se controle_de_historico >= número atual da interação
+        for file in files:
+            file_path = os.path.join(conversa_path, file)
+            if file.endswith('_mensagem.md'):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    conversation.append({
+                        "role": "user",
+                        "content": f.read().strip()
+                    })
+            elif file.endswith('_resposta.md'):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    conversation.append({
+                        "role": "assistant",
+                        "content": f.read().strip()
+                    })
+    else:
+        # Carrega apenas o histórico limitado pelo controle_de_historico
+        start_idx = max(0, len(files) - 2 * controle_de_historico - 1)
+        for file in files[start_idx:]:
+            file_path = os.path.join(conversa_path, file)
+            if file.endswith('_mensagem.md'):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    conversation.append({
+                        "role": "user",
+                        "content": f.read().strip()
+                    })
+            elif file.endswith('_resposta.md'):
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    conversation.append({
+                        "role": "assistant",
+                        "content": f.read().strip()
+                    })
+
+    return conversation
 
 def initialize_conversation(root_dir):
     """Inicializa a pasta de conversa e o arquivo de system dentro de .codeai"""
@@ -26,30 +79,6 @@ def initialize_conversation(root_dir):
             msg_file.write("# Escreva sua mensagem aqui e salve o arquivo.\n")
 
     return system_path, conversa_path
-
-def load_conversation(conversa_path):
-    """Carrega o histórico completo da conversa"""
-    conversation = []
-    files = sorted(os.listdir(conversa_path), key=lambda f: int(f.split('_')[0]))
-
-    for file in files:
-        file_path = os.path.join(conversa_path, file)
-        
-        if file.endswith('_mensagem.md'):
-            with open(file_path, 'r', encoding='utf-8') as f:
-                conversation.append({
-                    "role": "user",
-                    "content": f.read().strip()  # Lê o conteúdo da mensagem e assegura que está sendo incluído
-                })
-        elif file.endswith('_resposta.md'):
-            with open(file_path, 'r', encoding='utf-8') as f:
-                conversation.append({
-                    "role": "assistant",
-                    "content": f.read().strip()  # Lê o conteúdo da resposta
-                })
-
-    return conversation
-
 
 def save_response(conversa_path, response, last_user_message_file):
     """Salva a resposta do modelo no arquivo de resposta e cria o próximo arquivo de mensagem"""
@@ -75,4 +104,3 @@ def save_response(conversa_path, response, last_user_message_file):
         msg_file.write("# Escreva sua próxima mensagem aqui e salve o arquivo.\n")
     
     print(f"[LOG] Próximo arquivo de mensagem criado: {next_message_file}")
-    

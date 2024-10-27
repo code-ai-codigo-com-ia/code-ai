@@ -17,7 +17,7 @@ python --version
 Se você não tiver o `pip` instalado, você pode instalá-lo seguindo estas instruções:
 
 - **Windows**:
-
+  
   O `pip` geralmente é incluído na instalação do Python. Se você não tiver, execute o seguinte comando no terminal para instalar o `get-pip.py`:
 
   ```bash
@@ -141,19 +141,21 @@ O CodeAI possui os seguintes comandos para interagir com a ferramenta:
 Inicializa o CodeAI e cria a estrutura de diretórios necessária.
 
 - **Passo a Passo**:
-  1. Cria a pasta `.codeai` no diretório atual.
-  2. Inicializa um arquivo de configuração com as diretrizes do contexto.
-  3. Cria um diretório `conversa` para armazenar o histórico de mensagens.
-  4. Cria um arquivo `1_mensagem.md` onde você pode escrever sua primeira mensagem.
+   1. Cria a pasta `.codeai` no diretório atual.
+   2. Inicializa um arquivo de configuração com as diretrizes do contexto.
+   3. Cria um diretório `conversa` para armazenar o histórico de mensagens.
+   4. Cria um arquivo `1_mensagem.md` onde você pode escrever sua primeira mensagem.
+   5. Define um controle de histórico no arquivo `config.yml`, permitindo especificar quantas interações passadas devem ser consideradas ao carregar a conversa.
 
 ### `codeai contexto`
 
 Gera um arquivo temporário contendo o contexto atual do projeto e a estrutura de diretórios.
 
 - **Passo a Passo**:
-  1. Carrega as configurações do projeto.
-  2. Gera um arquivo `.md` com o conteúdo dos arquivos que estão sendo adicionados ao contexto.
-  3. O arquivo gerado pode ser usado para entender o estado atual do projeto e as interações.
+   1. Carrega as configurações do projeto.
+   2. Gera um arquivo `.md` com o conteúdo dos arquivos que estão sendo adicionados ao contexto.
+   3. O arquivo gerado pode ser usado para entender o estado atual do projeto e as interações.
+   4. Cria uma visualização da estrutura de diretórios do projeto.
 
 ### `codeai enviar`
 
@@ -165,10 +167,10 @@ Envia mensagens para a API da OpenAI. Este comando irá:
 4. Salvar o histórico de mensagens e a resposta do assistente.
 
 - **Passo a Passo**:
-  1. Coloque sua mensagem em `nova_mensagem.txt` na pasta `conversa/`.
-  2. Execute o comando `codeai enviar` para processar a mensagem.
-  3. A resposta do assistente será salva em um arquivo no formato `{numero}_resposta.md`.
-  4. O próximo arquivo de mensagens é criado automaticamente para futuras interações.
+   1. Coloque sua mensagem em `nova_mensagem.txt` na pasta `conversa/`.
+   2. Execute o comando `codeai enviar` para processar a mensagem.
+   3. A resposta do assistente será salva em um arquivo no formato `{numero}_resposta.md`.
+   4. O próximo arquivo de mensagens é criado automaticamente para futuras interações.
 
 ## Como Usar
 
@@ -199,11 +201,12 @@ Envia mensagens para a API da OpenAI. Este comando irá:
   - `conversa_path`: Caminho onde as mensagens estão armazenadas.
   - `user_message`: Mensagem do usuário a ser salva.
 
-### `load_conversation(conversa_path)`
+### `load_conversation(conversa_path, controle_de_historico)`
 
-- **Função**: Carrega todo o histórico da conversa, juntando mensagens do usuário e respostas do assistente.
+- **Função**: Carrega todo o histórico da conversa com base no controle de histórico.
 - **Parâmetros**:
   - `conversa_path`: Caminho das mensagens salvas.
+  - `controle_de_historico`: Número de interações a serem consideradas.
 - **Retorno**: Lista de dicionários representando a conversa.
 
 ### `send_message_to_openai(system_message, context_message, conversa_path)`

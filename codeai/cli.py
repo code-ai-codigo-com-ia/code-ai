@@ -28,9 +28,11 @@ def criar():
     success, message = initialize_context(root_dir)
     click.echo(message)
 
+    # Adiciona o controle de histórico ao arquivo config.yml
     config_data = {
         'modelo': 'gpt-4',
         'temperatura': 0.7,
+        'controle_de_historico': 0  # Inicia com zero
     }
 
     yaml_config_path = os.path.join(config_dir, 'config.yml')
@@ -83,10 +85,13 @@ def enviar():
     # Carrega a configuração
     config_file_path = os.path.join(root_dir, CONFIG_DIR, 'config.yml')
     with open(config_file_path, 'r', encoding='utf-8') as f:
-        config_data = yaml.safe_load(f)  # Adiciona essa linha
+        config_data = yaml.safe_load(f)
 
-    # Carregar a conversa
-    conversation = load_conversation(conversa_path)
+    # Obter o valor de controle_de_historico
+    controle_de_historico = config_data.get('controle_de_historico', 0)
+
+    # Carregar a conversa com base no controle_de_historico
+    conversation = load_conversation(conversa_path, controle_de_historico)
 
     # Adiciona system message e contexto ao array de conversa
     conversation.insert(0, {"role": "system", "content": system_message['content']})
@@ -105,7 +110,6 @@ def enviar():
     message_files = sorted([f for f in os.listdir(conversa_path) if f.endswith('_mensagem.md')])
     last_user_message_file = os.path.join(conversa_path, message_files[-1])
     save_response(conversa_path, response, last_user_message_file)
-
 
 if __name__ == '__main__':
     main()
