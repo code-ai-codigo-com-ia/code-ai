@@ -105,15 +105,17 @@ def load_context(root_dir):
 
 def should_ignore(file_path, ignore_patterns):
     """Verifica se o arquivo ou diretório deve ser ignorado com base nos padrões"""
-    root_dir = os.path.abspath(os.getcwd())
-    absolute_ignore_patterns = [os.path.join(root_dir, pattern) for pattern in ignore_patterns]
-
-    abs_file_path = os.path.abspath(file_path)
+    abs_file_path = os.path.abspath(file_path)  # Caminho absoluto do arquivo
     
-    for pattern in absolute_ignore_patterns:
-        if fnmatch.fnmatch(abs_file_path, pattern) or fnmatch.fnmatch(os.path.basename(abs_file_path), pattern):
+    for pattern in ignore_patterns:
+        # Remove barra final dos padrões de diretório para evitar problemas de correspondência
+        normalized_pattern = pattern.rstrip('/')
+
+        # Verifica se o arquivo ou diretório corresponde a qualquer padrão fornecido
+        if fnmatch.fnmatch(abs_file_path, normalized_pattern) or fnmatch.fnmatch(os.path.basename(file_path), normalized_pattern):
             return True
-        if abs_file_path.startswith(pattern):
+        # Também verifica se o caminho começa com um diretório ignorado
+        if abs_file_path.startswith(os.path.abspath(normalized_pattern)):
             return True
     
     return False

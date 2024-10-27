@@ -30,9 +30,9 @@ def criar():
 
     # Adiciona o controle de histórico ao arquivo config.yml
     config_data = {
-        'modelo': 'gpt-4',
-        'temperatura': 0.7,
-        'controle_de_historico': 0  # Inicia com zero
+        'modelo': 'gpt-4o-mini',
+        'temperatura': 0.3,
+        'controle_de_historico': 0
     }
 
     yaml_config_path = os.path.join(config_dir, 'config.yml')
