@@ -102,24 +102,27 @@ def load_context(root_dir):
     
     return context_data
 
-
 def should_ignore(file_path, ignore_patterns):
     """Verifica se o arquivo ou diretório deve ser ignorado com base nos padrões"""
     abs_file_path = os.path.abspath(file_path)  # Caminho absoluto do arquivo
-    
-    for pattern in ignore_patterns:
-        # Remove barra final dos padrões de diretório para evitar problemas de correspondência
-        normalized_pattern = pattern.rstrip('/')
 
-        # Verifica se o arquivo ou diretório corresponde a qualquer padrão fornecido
-        if fnmatch.fnmatch(abs_file_path, normalized_pattern) or fnmatch.fnmatch(os.path.basename(file_path), normalized_pattern):
-            return True
-        # Também verifica se o caminho começa com um diretório ignorado
-        if abs_file_path.startswith(os.path.abspath(normalized_pattern)):
-            return True
+    for pattern in ignore_patterns:
+        # Verifica se o padrão é um caminho absoluto
+        if os.path.isabs(pattern):
+            # Usa fnmatch para tratar padrões absolutos com coringas
+            if fnmatch.fnmatch(abs_file_path, pattern):
+                return True
+        else:
+            # Trata padrões globais e relativos, aplicando tanto ao caminho completo quanto ao nome do arquivo/diretório
+            if fnmatch.fnmatch(file_path, pattern) or fnmatch.fnmatch(os.path.basename(file_path), pattern):
+                return True
+            # Adiciona verificação para padrões de diretório com /* ao final
+            if pattern.endswith("/*"):
+                directory_pattern = pattern[:-2]  # Remove o /* do final
+                if abs_file_path.startswith(os.path.abspath(directory_pattern)):
+                    return True
     
     return False
-
 
 def generate_structure(root_dir):
     """Gera a estrutura de diretórios em formato de árvore"""
