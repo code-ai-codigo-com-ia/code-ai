@@ -66,6 +66,7 @@ def load_context(root_dir):
     }
     
     section = None
+    sub_section = None  # Define sub-seções específicas como 'adicionar' e 'ignorar'
     
     with open(config_path, 'r', encoding='utf-8') as config_file:
         lines = config_file.readlines()
@@ -76,70 +77,81 @@ def load_context(root_dir):
                 continue  # Ignora comentários e linhas vazias
             if line.startswith("pasta-raiz:"):
                 context_data['pasta_raiz'] = line.split(":", 1)[1].strip()
-            elif line.startswith("[context]"):
-                section = "adicionar"
-            elif line.startswith("[estrutura]"):
-                section = "estrutura_adicionar"
-            elif line.startswith("[outros]"):
+            elif line == "[context]":
+                section = "context"
+                sub_section = None  # Reinicia a sub-seção ao trocar de seção
+            elif line == "[estrutura]":
+                section = "estrutura"
+                sub_section = None
+            elif line == "[outros]":
                 section = "outros"
-            elif line.startswith("adicionar:"):
-                continue
-            elif line.startswith("ignorar:"):
-                if section == "adicionar":
-                    section = "ignorar"
-                elif section == "estrutura_adicionar":
-                    section = "estrutura_ignorar"
-            elif section == "adicionar":
+                sub_section = None
+            elif line == "adicionar:":
+                sub_section = "adicionar"
+            elif line == "ignorar:":
+                sub_section = "ignorar"
+            elif sub_section == "adicionar" and section == "context":
                 context_data['adicionar'].append(line)
-            elif section == "ignorar":
+            elif sub_section == "ignorar" and section == "context":
                 context_data['ignorar'].append(line)
-            elif section == "estrutura_adicionar":
+            elif sub_section == "adicionar" and section == "estrutura":
                 context_data['estrutura_adicionar'].append(line)
-            elif section == "estrutura_ignorar":
+            elif sub_section == "ignorar" and section == "estrutura":
                 context_data['estrutura_ignorar'].append(line)
             elif section == "outros":
                 context_data['outros'].append(line)
     
     return context_data
 
-def should_ignore(file_path, ignore_patterns):
-    """Verifica se o arquivo ou diretório deve ser ignorado com base nos padrões"""
+
+def should_ignore(file_path, ignore_patterns, root_dir):
+    """Verifica se o arquivo ou diretório deve ser ignorado com base nos padrões."""
     abs_file_path = os.path.abspath(file_path)
+    base_name = os.path.basename(file_path)
 
     for pattern in ignore_patterns:
-        if os.path.isabs(pattern):
-            if fnmatch.fnmatch(abs_file_path, pattern):
-                return True
-        else:
-            if fnmatch.fnmatch(file_path, pattern) or fnmatch.fnmatch(os.path.basename(file_path), pattern):
-                return True
-            
-            # Tratamento específico para diretórios como .git ou __pycache__
-            if pattern.endswith("/"):
-                directory_pattern = os.path.abspath(pattern[:-1])
-                if os.path.isdir(file_path) and abs_file_path.startswith(directory_pattern):
-                    return True
+        pattern = pattern.strip()
+        if not pattern:
+            continue  # Skip empty patterns
 
-            # Verificação de subdiretórios com /* no final
-            if pattern.endswith("/*"):
-                directory_pattern = pattern[:-2]
-                if abs_file_path.startswith(os.path.abspath(directory_pattern)):
-                    return True
+        # Verificar diretórios que terminam com "/"
+        if pattern.endswith("/"):
+            directory_pattern = os.path.abspath(os.path.join(root_dir, pattern.rstrip("/")))
+            if abs_file_path == directory_pattern or abs_file_path.startswith(directory_pattern + os.sep):
+                return True
+
+        # Verificar subdiretórios (terminam com "/*")
+        elif pattern.endswith("/*"):
+            directory_pattern = os.path.abspath(os.path.join(root_dir, pattern[:-2]))
+            if abs_file_path.startswith(directory_pattern + os.sep):
+                return True
+
+        # Verificar padrões de extensão (ex: "*.txt")
+        elif pattern.startswith("*.") and fnmatch.fnmatch(base_name, pattern):
+            return True
+
+        # Verificar correspondência exata de nome de arquivo ou diretório
+        elif fnmatch.fnmatch(base_name, pattern):
+            return True
 
     return False
 
+
 def generate_structure(root_dir):
-    """Gera a estrutura de diretórios em formato de árvore"""
+    """Gera a estrutura de diretórios em formato de árvore usando configurações específicas da seção [estrutura]"""
     context_data = load_context(root_dir)
+    estrutura_adicionar = context_data['estrutura_adicionar']
+    estrutura_ignorar = context_data['estrutura_ignorar']
     structure = []
     processed_dirs = set()
 
-    for file_path in context_data['estrutura_adicionar']:
+    for file_path in estrutura_adicionar:
         absolute_path = os.path.join(context_data['pasta_raiz'], file_path)
         if file_path == '.':
             for dirpath, dirnames, filenames in os.walk(context_data['pasta_raiz']):
-                # Ignorar pastas com base nos padrões
-                if should_ignore(dirpath, context_data['estrutura_ignorar']):
+                # Ignorar pastas com base nos padrões de [estrutura]
+                if should_ignore(dirpath, estrutura_ignorar, context_data['pasta_raiz']):
+                    dirnames[:] = []  # Do not descend into ignored directories
                     continue
                 if dirpath in processed_dirs:
                     continue
@@ -151,11 +163,11 @@ def generate_structure(root_dir):
                 
                 # Adiciona os arquivos com indentação
                 for filename in filenames:
-                    if should_ignore(os.path.join(dirpath, filename), context_data['estrutura_ignorar']):
+                    if should_ignore(os.path.join(dirpath, filename), estrutura_ignorar, context_data['pasta_raiz']):
                         continue
                     file_indent = ' ' * 4 * (depth + 1)
                     structure.append(f"{file_indent}{filename}")
-    
+
     return structure
 
 
@@ -175,9 +187,9 @@ def create_context_file(root_dir):
             
             if file_path == '.':
                 for dirpath, _, filenames in os.walk(context_data['pasta_raiz']):
-                    if should_ignore(dirpath, context_data['ignorar']):
+                    if should_ignore(dirpath, context_data['ignorar'], context_data['pasta_raiz']):
                         continue
-                    filenames = [f for f in filenames if not should_ignore(os.path.join(dirpath, f), context_data['ignorar'])]
+                    filenames = [f for f in filenames if not should_ignore(os.path.join(dirpath, f), context_data['ignorar'], context_data['pasta_raiz'])]
                     for filename in filenames:
                         abs_file_path = os.path.join(dirpath, filename)
                         if abs_file_path in processed_files:
@@ -189,7 +201,7 @@ def create_context_file(root_dir):
                                 context_file.write(f.read())
                         except UnicodeDecodeError:
                             context_file.write(f"\n--- {abs_file_path} não pôde ser lido como UTF-8 ---\n")
-            elif os.path.isfile(absolute_path) and not should_ignore(absolute_path, context_data['ignorar']):
+            elif os.path.isfile(absolute_path) and not should_ignore(absolute_path, context_data['ignorar'], context_data['pasta_raiz']):
                 if absolute_path in processed_files:
                     continue
                 processed_files.add(absolute_path)  # Evita duplicatas
