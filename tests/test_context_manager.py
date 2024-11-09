@@ -28,25 +28,119 @@ def test_initialize_context(setup_criar_environment):
     root_dir = setup_criar_environment
     success, message = initialize_context(root_dir)
     config_path = os.path.join(root_dir, '.codeai', '.codeai_context')
-    
-    logger.info(f"Teste de inicialização do contexto em {root_dir}")
-    logger.info(f"Resultado da inicialização: {message}")
-    
-    assert success
+
+    assert success, f"Expect success but got failure with message: {message}"
     assert os.path.exists(config_path)
-    assert "Configuração inicializada" in message
+    
+    # Verificar se ambos os contextos possuem os padrões de ignorar comum
+    with open(config_path, 'r', encoding='utf-8') as config_file:
+        content = config_file.read()
+        common_patterns = [
+            ".codeai/",
+            ".git/",
+            "__pycache__/",
+            "*.pyc",
+            "*.pyo",
+            "*.bin",
+            "*.exe",
+            "*.dll",
+            "*.so",
+            "*.dylib",
+            "*.zip",
+            "*.tar",
+            "*.gz",
+            "*.7z",
+            "*.png",
+            "*.jpg",
+            "*.jpeg",
+            "target/",
+            "*.class",
+            "*.jar",
+            "*.war",
+            ".idea/",
+            "*.iml",
+            "*.gradle",
+            "*.log",
+            "*.gem",
+            "log/",
+            "tmp/",
+            "vendor/",
+            "*.rbc",
+            ".bundle/",
+            "*.sqlite3",
+            ".rspec",
+            "bin/",
+            "pkg/",
+            "vendor/",
+            "*.test",
+            "*.mod",
+            "*.sum",
+            "node_modules/",
+            "package-lock.json",
+            "npm-debug.log",
+            ".env",
+            ".npm/"
+        ]
+
+        for pattern in common_patterns:
+            assert pattern in content, f"{pattern} is missing in the configuration"
 
 def test_load_context(setup_criar_environment):
     root_dir = setup_criar_environment
     initialize_context(root_dir)  # Cria o arquivo de configuração necessário
     context_data = load_context(root_dir)
-    
-    logger.info(f"Contexto carregado: {context_data}")
-    
-    assert context_data['pasta_raiz'] == root_dir
-    assert '.' in context_data['adicionar']
-    assert '.codeai/' in context_data['ignorar']
 
+    # Verifique se ambos context e estrutura têm os mesmos padrões na seção ignorar
+    expected_ignore_patterns = [
+        ".codeai/",
+        ".git/",
+        "__pycache__/",
+        "*.pyc",
+        "*.pyo",
+        "*.bin",
+        "*.exe",
+        "*.dll",
+        "*.so",
+        "*.dylib",
+        "*.zip",
+        "*.tar",
+        "*.gz",
+        "*.7z",
+        "*.png",
+        "*.jpg",
+        "*.jpeg",
+        "target/",
+        "*.class",
+        "*.jar",
+        "*.war",
+        ".idea/",
+        "*.iml",
+        "*.gradle",
+        "*.log",
+        "*.gem",
+        "log/",
+        "tmp/",
+        "vendor/",
+        "*.rbc",
+        ".bundle/",
+        "*.sqlite3",
+        ".rspec",
+        "bin/",
+        "pkg/",
+        "vendor/",
+        "*.test",
+        "*.mod",
+        "*.sum",
+        "node_modules/",
+        "package-lock.json",
+        "npm-debug.log",
+        ".env",
+        ".npm/"
+    ]
+
+    assert context_data['ignorar'] == expected_ignore_patterns
+    assert context_data['estrutura_ignorar'] == expected_ignore_patterns
+    
 def test_should_ignore():
     ignore_patterns = [".git/", "*.pyc", "*.bin", "subdir/"]
     root_dir = "/fake/root"

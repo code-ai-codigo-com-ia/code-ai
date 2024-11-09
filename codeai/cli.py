@@ -98,13 +98,14 @@ def enviar():
     if context_message:
         conversation.insert(1, {"role": "system", "content": f"Contexto adicional: {context_message}"})
 
-    # Verifica se o modelo é Gemini ou OpenAI e usa o conector correto
+    # Passar o modelo carregado para a função de envio
+    model = config_data.get('modelo', 'gpt-4o-mini')  # Valor padrão caso não esteja definido
     if config_data.get('modelo') == 'gemini-1.5-flash':
         from codeai.gemini_connector import send_message_to_gemini
         response = send_message_to_gemini(conversation)
     else:
         from codeai.openai_connector import send_message_to_openai
-        response = send_message_to_openai(conversation)
+        response = send_message_to_openai(conversation, model)
 
     # Salva a resposta
     message_files = sorted([f for f in os.listdir(conversa_path) if f.endswith('_mensagem.md')])

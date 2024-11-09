@@ -12,42 +12,89 @@ def get_config_path(root_dir):
 def initialize_context(root_dir):
     """Inicializa o arquivo de configuração dentro da pasta .codeai se não existir."""
     config_path = get_config_path(root_dir)
-    
+
     if os.path.exists(config_path):
         return False, f"Configuração já existente em {config_path}"
-    
-    # Cria o arquivo de configuração dentro da pasta .codeai
+
+    # Lista comum de padrões para ignorar
+    common_ignore_patterns = [
+        ".codeai/",
+        ".git/",
+        "__pycache__/",
+        "*.pyc",
+        "*.pyo",
+        "*.bin",
+        "*.exe",
+        "*.dll",
+        "*.so",
+        "*.dylib",
+        "*.zip",
+        "*.tar",
+        "*.gz",
+        "*.7z",
+        "*.png",
+        "*.jpg",
+        "*.jpeg",
+        # Diretórios e arquivos irrelevantes para o desenvolvimento
+        "target/",
+        "*.class",
+        "*.jar",
+        "*.war",
+        ".idea/",
+        "*.iml",
+        "*.gradle",
+        "*.log",
+        # Ruby
+        "*.gem",
+        "log/",
+        "tmp/",
+        "vendor/",
+        "*.rbc",
+        ".bundle/",
+        "*.sqlite3",
+        ".rspec",
+        # Go
+        "bin/",
+        "pkg/",
+        "vendor/",
+        "*.test",
+        "*.mod",
+        "*.sum",
+        # Node.js
+        "node_modules/",
+        "package-lock.json",
+        "npm-debug.log",
+        ".env",
+        ".npm/"
+    ]
+
     with open(config_path, 'w', encoding='utf-8') as config_file:
         # Seção do contexto
         config_file.write("[context]\n")
         config_file.write(f"pasta-raiz: {root_dir}\n\n")
         config_file.write("adicionar:\n")
-        config_file.write(".\n")  # Adiciona a raiz automaticamente
+        config_file.write(".\n")
         config_file.write("# Adicione os caminhos para incluir no contexto, um por linha\n\n")
         config_file.write("ignorar:\n")
-        config_file.write(".codeai/\n")
-        config_file.write(".git/\n")
-        config_file.write("__pycache__/\n")
-        config_file.write("*.pyc\n*.pyo\n*.bin\n*.exe\n*.dll\n*.so\n*.dylib\n*.zip\n*.tar\n*.gz\n*.7z\n*.png\n*.jpg\n*.jpeg\n")
-        config_file.write("# Adicione os caminhos a serem ignorados, um por linha\n\n")
-        
+        for pattern in common_ignore_patterns:
+            config_file.write(f"{pattern}\n")
+        config_file.write("\n")  # Linha em branco para legibilidade
+
         # Seção da estrutura
         config_file.write("[estrutura]\n")
         config_file.write("adicionar:\n")
-        config_file.write(".\n")  # Adiciona a raiz automaticamente na estrutura
+        config_file.write(".\n")
         config_file.write("# Adicione os caminhos para estruturar, um por linha\n\n")
         config_file.write("ignorar:\n")
-        config_file.write(".codeai/\n")
-        config_file.write(".git/\n")
-        config_file.write("__pycache__/\n")
-        config_file.write("*.pyc\n*.pyo\n*.bin\n*.exe\n*.dll\n*.so\n*.dylib\n*.zip\n*.tar\n*.gz\n*.7z\n*.png\n*.jpg\n*.jpeg\n")
-        config_file.write("# Adicione os caminhos a serem ignorados, um por linha\n\n")
-        
+        for pattern in common_ignore_patterns:
+            config_file.write(f"{pattern}\n")
+        config_file.write("\n")  # Linha em branco para legibilidade
+
+        # Seção de outros
         config_file.write("[outros]\n")
         config_file.write("outros:\n")
-    
-    return True, f"Configuração inicializada em {config_path}"
 
+    return True, f"Configuração inicializada em {config_path}"
 
 def load_context(root_dir):
     """Carrega os contextos e arquivos a serem ignorados do arquivo de configuração"""
